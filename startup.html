@@ -104,7 +104,7 @@ body::after{content:'';position:fixed;inset:0;background:url("data:image/svg+xml
 .sltp{display:flex;justify-content:space-between;font-size:.68rem}
 .slnm{color:var(--white)}.slhn{color:var(--muted);font-size:.58rem}
 .slv{font-family:var(--mono);color:var(--hard);min-width:26px;text-align:right}
-input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--bhi);border-radius:99px;outline:none;cursor:pointer}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:var(--bhi);border-radius:99px;outline:none;cursor:pointer}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--hard);cursor:pointer;box-shadow:0 0 0 3px rgba(90,143,255,.2);transition:.15s}
 input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .toth{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
@@ -473,40 +473,109 @@ _ev(){
 },
 
 // ── 3: Budget allocation (marketing da loja) ─────────
-{type:'hard',skill:'Gestão Financeira',title:'Verba de Marketing',
-svg:SV.money,
-scenario:'Sua loja tem R$400 para investir em divulgação esse mês. Os dados mostram de onde vieram os clientes nos últimos 3 meses. Distribua a verba de forma inteligente entre os 4 canais.',
-_areas:[
-  {name:'Instagram & Stories',hint:'Trouxe 48% dos novos clientes',opt:160},
-  {name:'Panfletos no bairro',hint:'Trouxe 28% — custo baixo',opt:100},
-  {name:'WhatsApp para clientes antigos',hint:'Melhor taxa de retorno: 34%',opt:100},
-  {name:'Outdoor na avenida',hint:'Trouxe apenas 8% — caro',opt:40}
+{
+type:'hard',
+skill:'Gestão Financeira',
+title:'Orçamento de Marketing Limitado',
+img:IMGS.retail,
+scenario:'Você tem R$ 1.000 para investir em marketing este mês. Distribua o orçamento entre as opções abaixo. Cuidado para não ultrapassar o limite.',
+
+_budget:[
+  {label:'Anúncios no Instagram',max:500,value:0},
+  {label:'Panfletos Impressos',max:300,value:0},
+  {label:'Parceria com Influenciador Local',max:400,value:0},
+  {label:'Google Ads',max:600,value:0}
 ],
-_vals:[100,100,100,100],
+
 html(){
-  return`<div class="bdg-total"><span class="bdg-tl">Total alocado</span><span class="bdg-tv ok2" id="bdg-tot">R$ 400</span></div>
-  <div class="bdg-grid">${this._areas.map((a,i)=>`<div class="bdg-item"><div class="bdg-label">${a.name}</div><div class="bdg-sub">${a.hint}</div><div class="bdg-ctrl"><button class="bdg-btn" onclick="STAGES[2]._adj(${i},-20)">−</button><span class="bdg-val" id="bdg-v${i}">R$100</span><button class="bdg-btn" onclick="STAGES[2]._adj(${i},+20)">+</button></div><div class="bdg-bar"><div class="bdg-fill" id="bdg-f${i}" style="width:25%"></div></div></div>`).join('')}</div>
-  <div class="subrow"><button class="bsub" onclick="STAGES[2]._ev()">Confirmar Verba</button></div>`;
+return `
+<div class="toth">Orçamento máximo: R$ 1000</div>
+
+<div class="bdg-total">
+  <div class="bdg-tl">Total utilizado</div>
+  <div class="bdg-tv ok2" id="bdg-total">R$ 0</div>
+</div>
+
+<div class="bdg-grid">
+${this._budget.map((item,i)=>`
+<div class="bdg-item">
+  <div class="bdg-label">${item.label}</div>
+  <div class="bdg-sub">Máx: R$ ${item.max}</div>
+  <div class="bdg-ctrl">
+    <button class="bdg-btn" onclick="STAGES[2].dec(${i})">−</button>
+    <div class="bdg-val" id="bdg-val-${i}">0</div>
+    <button class="bdg-btn" onclick="STAGES[2].inc(${i})">+</button>
+  </div>
+  <div class="bdg-bar">
+    <div class="bdg-fill" id="bdg-fill-${i}" style="width:0%"></div>
+  </div>
+</div>
+`).join('')}
+</div>
+
+<div class="subrow">
+  <button class="bsub" onclick="STAGES[2]._ev()">Confirmar Investimento</button>
+</div>
+`;
 },
-mount(){this._vals=[100,100,100,100]},
-_adj(i,d){
-  const v=this._vals,tot=v.reduce((a,b)=>a+b,0),nv=v[i]+d;
-  if(nv<0||nv>300)return;if(tot+d>400)return;
-  v[i]=nv;const ntot=v.reduce((a,b)=>a+b,0);
-  document.getElementById(`bdg-v${i}`).textContent='R$'+nv;
-  document.getElementById(`bdg-f${i}`).style.width=(nv/4)+'%';
-  const tel=document.getElementById('bdg-tot');
-  tel.textContent='R$ '+ntot;tel.className='bdg-tv '+(ntot===400?'ok2':'over');
-},
-_ev(){
-  const v=this._vals,opt=this._areas.map(a=>a.opt),tot=v.reduce((a,b)=>a+b,0);
-  if(tot!==400){G.result('poor','O total não bate R$400. Em finanças reais, saldo errado significa dívida ou dinheiro parado à toa. Ajuste até fechar!',{h:-8,s:-2});return}
-  let diff=0;v.forEach((val,i)=>{diff+=Math.abs(val-opt[i])});
-  if(diff<=80)G.result('great','Alocação estratégica! Você priorizou Instagram (maior resultado) e WhatsApp (melhor retorno de clientes antigos), e reduziu o outdoor que traz pouco resultado pelo custo. Isso é pensar com dados!',{h:18,s:7});
-  else if(diff<=160)G.result('ok','Divisão razoável! Mas os dados mostravam claramente que outdoor tem ROI fraco. Distribuir verba com base nos números faz toda a diferença no resultado do mês.',{h:9,s:4});
-  else G.result('poor','A distribuição não seguiu os dados disponíveis. Se o Instagram traz quase metade dos clientes, ele merece mais verba. Decisões de marketing precisam ser baseadas em resultado!',{h:-8,s:-3});
+
+inc(i){
+if(this._budget[i].value < this._budget[i].max){
+  this._budget[i].value += 100;
+  this.updateUI();
 }
 },
+
+dec(i){
+if(this._budget[i].value > 0){
+  this._budget[i].value -= 100;
+  this.updateUI();
+}
+},
+
+updateUI(){
+let total = this._budget.reduce((acc,b)=>acc+b.value,0);
+document.getElementById('bdg-total').textContent = `R$ ${total}`;
+
+this._budget.forEach((b,i)=>{
+  document.getElementById(`bdg-val-${i}`).textContent = b.value;
+  document.getElementById(`bdg-fill-${i}`).style.width =
+    (b.value / b.max) * 100 + '%';
+});
+
+const totalEl = document.getElementById('bdg-total');
+if(total > 1000){
+  totalEl.classList.remove('ok2');
+  totalEl.classList.add('over');
+}else{
+  totalEl.classList.remove('over');
+  totalEl.classList.add('ok2');
+}
+},
+
+_ev(){
+let total = this._budget.reduce((acc,b)=>acc+b.value,0);
+
+if(total > 1000){
+  G.result('poor',
+    'Você ultrapassou o orçamento. Em gestão financeira, disciplina é essencial. Não adianta ter boas ideias se você quebra o caixa.',
+    {h:-12,s:-4}
+  );
+  return;
+}
+
+if(total >= 800 && total <= 1000){
+  G.result('great',
+    'Boa distribuição! Você utilizou o orçamento de forma estratégica sem estourar o limite. Isso demonstra visão financeira equilibrada.',
+    {h:18,s:6}
+  );
+}
+else{
+  G.result('ok',
+    'Você foi conservador. Não estourou o orçamento, mas talvez tenha deixado oportunidades na mesa.',
+    {h:6,s:2}
+  );
+}}},
 
 // ── 4: Sequence (atendimento ao cliente) ─────────────
 {type:'soft',skill:'Atendimento & Comunicação',title:'Cliente Furioso na Loja',
