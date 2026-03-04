@@ -468,7 +468,11 @@ _ev(){
   let score=0;order.forEach((cp,i)=>{if(cp===i)score++});
   if(score>=3)G.result('great','Excelente priorização! Você colocou o cliente presencial em primeiro — certo. Cliente na sua frente é sempre urgente. Fornecedor impacta o futuro próximo, e o contador pode esperar até sexta.',{h:5,s:18});
   else if(score>=2)G.result('ok','Boa intuição geral! Mas lembre: o que está na sua frente e afeta a experiência do cliente em tempo real sempre vem primeiro. Prazo distante = menor urgência agora.',{h:3,s:9});
-  else G.result('poor','Difícil priorizar, né? A dica é: urgente + impacto imediato vem primeiro. Cliente presente > operação próxima > prazo futuro > planejamento interno.',{h:-3,s:-9});
+  else G.result(
+  'poor',
+  'Difícil priorizar, né? A dica é: urgente + impacto imediato vem primeiro. Cliente presente > operação próxima > prazo futuro > planejamento interno.',
+  {h:-3,s:-8}
+);
 }
 },
 
